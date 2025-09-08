@@ -1,0 +1,211 @@
+Design and implement a console-based Ride-Hailing system to register drivers/riders, request
+rides, assign drivers, and compute fares using OOP in Java.
+Requirements:
+1. Create at least 4 classes:
+o User – base with id, name, phone.
+o Rider – extends User, preferredPayment, rating.
+o Driver – extends User, vehicleNo, vehicleType, availability, rating.
+o RideService – request matching, fare calculation, trip history.
+2. Each class must include:
+o ≥4 instance/static variables.
+o A constructor to initialize values.
+o ≥5 methods (getters/setters, requestRide(), assignDriver(), completeRide(), fare()).
+3. Demonstrate OOPS Concepts:
+o Inheritance → Rider & Driver from User.
+o Method Overloading → fare() by distance-only or distance+time+surcharge.
+o Method Overriding → different availability()/display() per role.
+o Polymorphism → store users as User and resolve behavior at runtime.
+o Encapsulation → protect ratings and availability.
+4. Write a Main class (RideAppMain) to test:
+o Register riders/drivers, request rides.
+o Auto-assign nearest available driver, complete rides.
+o Print daily earnings, driver leaderboards, rider histories.
+
+
+SOURCE CODE:
+package Javaprojects;
+
+public class User {
+	    private String id;
+	    private String name;
+	    private String phone;
+
+	    public User(String id, String name, String phone) {
+	        this.id = id;
+	        this.name = name;
+	        this.phone = phone;
+	    }
+
+	    public String getId() { return id; }
+	    public String getName() { return name; }
+	    public String getPhone() { return phone; }
+
+	    public void display() {
+	        System.out.println("User: " + name + ", Phone: " + phone);
+	    }
+	}
+
+
+public class Rider extends User {
+    private String preferredPayment;
+    private double rating;
+
+    public Rider(String id, String name, String phone, String preferredPayment) {
+        super(id, name, phone);
+        this.preferredPayment = preferredPayment;
+        this.rating = 5.0;
+    }
+
+    public String getPreferredPayment() { return preferredPayment; }
+    public double getRating() { return rating; }
+    public void updateRating(double newRating) { this.rating = newRating; }
+
+    @Override
+    public void display() {
+        System.out.println("Rider: " + getName() + ", Rating: " + rating);
+    }
+}
+
+public class Driver extends User {
+    private String vehicleNo;
+    private String vehicleType;
+    private boolean isAvailable;
+    private double rating;
+
+    public Driver(String id, String name, String phone, String vehicleNo, String vehicleType) {
+        super(id, name, phone);
+        this.vehicleNo = vehicleNo;
+        this.vehicleType = vehicleType;
+        this.isAvailable = true;
+        this.rating = 5.0;
+    }
+
+    public boolean isAvailable() { return isAvailable; }
+    public void setAvailable(boolean available) { this.isAvailable = available; }
+
+    public double getRating() { return rating; }
+    public void updateRating(double newRating) { this.rating = newRating; }
+
+    @Override
+    public void display() {
+        System.out.println("Driver: " + getName() + ", Vehicle: " + vehicleNo + ", Rating: " + rating);
+    }
+}
+
+import java.util.*;
+
+public class RideService {
+    private List<Rider> riders = new ArrayList<>();
+    private List<Driver> drivers = new ArrayList<>();
+    private List<String> tripHistory = new ArrayList<>();
+
+    public void registerRider(Rider rider) {
+        riders.add(rider);
+        System.out.println("Rider registered: " + rider.getName());
+    }
+
+    public void registerDriver(Driver driver) {
+        drivers.add(driver);
+        System.out.println("Driver registered: " + driver.getName());
+    }
+
+    public Driver findAvailableDriver() {
+        for (Driver driver : drivers) {
+            if (driver.isAvailable()) return driver;
+        }
+        return null;
+    }
+
+    public void requestRide(Rider rider, double distance, double time) {
+        Driver driver = findAvailableDriver();
+        if (driver == null) {
+            System.out.println("No available drivers right now.");
+            return;
+        }
+
+        driver.setAvailable(false); // assign driver
+        double fare = fare(distance); // Method Overloading
+        double fullFare = fare(distance, time, 10); // Overloaded version
+        System.out.println("Ride started with " + driver.getName() + ". Estimated Fare: ₹" + fullFare);
+        
+        tripHistory.add("Rider: " + rider.getName() + " with Driver: " + driver.getName() + " | Fare: ₹" + fullFare);
+        
+        completeRide(driver);
+    }
+
+    public void completeRide(Driver driver) {
+        driver.setAvailable(true);
+        System.out.println("Ride completed with driver " + driver.getName());
+    }
+
+    // Method Overloading
+    public double fare(double distance) {
+        return distance * 10; // base fare
+    }
+
+    public double fare(double distance, double time, double surcharge) {
+        return (distance * 10) + (time * 2) + surcharge;
+    }
+
+    public void showTripHistory() {
+        System.out.println("\n--- Trip History ---");
+        for (String trip : tripHistory) {
+            System.out.println(trip);
+        }
+    }
+
+    public void printLeaderboard() {
+        System.out.println("\n--- Driver Ratings ---");
+        drivers.sort((d1, d2) -> Double.compare(d2.getRating(), d1.getRating()));
+        for (Driver d : drivers) {
+            System.out.println(d.getName() + " - Rating: " + d.getRating());
+        }
+    }
+}
+
+public class RideAppMain {
+    public static void main(String[] args) {
+        RideService service = new RideService();
+
+        // Create users
+        Rider r1 = new Rider("R001", "Alice", "1234567890", "UPI");
+        Driver d1 = new Driver("D001", "Bob", "9876543210", "KA01AB1234", "Sedan");
+        Driver d2 = new Driver("D002", "Charlie", "9999999999", "KA02CD5678", "Hatchback");
+
+        // Register them
+        service.registerRider(r1);
+        service.registerDriver(d1);
+        service.registerDriver(d2);
+
+        // Request a ride
+        service.requestRide(r1, 5.0, 15.0);
+
+        // Show reports
+        service.showTripHistory();
+        service.printLeaderboard();
+
+        // Demonstrating Polymorphism
+        User u1 = r1;
+        User u2 = d1;
+        u1.display();  // Rider display()
+        u2.display();  // Driver display()
+    }
+}
+
+
+OUTPUT:
+
+Rider registered: Alice
+Driver registered: Bob
+Driver registered: Charlie
+Ride started with Bob. Estimated Fare: ₹90.0
+Ride completed with driver Bob
+
+--- Trip History ---
+Rider: Alice with Driver: Bob | Fare: ₹90.0
+
+--- Driver Ratings ---
+Bob - Rating: 5.0
+Charlie - Rating: 5.0
+Rider: Alice, Rating: 5.0
+Driver: Bob, Vehicle: KA01AB1234, Rating: 5.0
